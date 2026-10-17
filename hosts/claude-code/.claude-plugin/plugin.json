@@ -1,0 +1,25 @@
+{
+  "name": "llm-wiki",
+  "version": "0.1.0",
+  "description": "Your own LLM wiki: build, query and maintain a curated Markdown wiki of cited knowledge with Wikileaf's validated tools (search, cite, and an editor that rejects batches that break the wiki's conventions).",
+  "author": {
+    "name": "Amoz Pay"
+  },
+  "keywords": [
+    "wiki",
+    "knowledge-base",
+    "llm-wiki",
+    "markdown",
+    "citations",
+    "mcp"
+  ],
+  "mcpServers": {
+    "wikileaf": {
+      "type": "stdio",
+      "command": "${CLAUDE_PLUGIN_ROOT}/bin/run",
+      "args": [
+        "wikileaf-mcp-editor"
+      ]
+    }
+  }
+}

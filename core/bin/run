@@ -1,0 +1,93 @@
+#!/bin/sh
+# Run one of Wikileaf's binaries, downloading it first if it is not here yet.
+#
+#   run <wikileaf-mcp | wikileaf-mcp-editor | wikileaf> [arguments...]
+#
+# The release this plugin is built against, its download location and the
+# sha256 of each archive are pinned in release.env next to this script's
+# folder. The archive is checked against that hash before anything in it runs,
+# and is cached, so the download happens once per version.
+#
+# stdout belongs to the program (an MCP server speaks on it): every message of
+# this script goes to stderr.
+#
+# Environment:
+#   WIKILEAF_BIN_DIR       use the binaries in this folder (development; no download)
+#   LLM_WIKI_CACHE         where downloaded binaries are kept
+#                          (default: $CLAUDE_PLUGIN_DATA, else ~/.local/share/llm-wiki)
+set -eu
+
+say() { printf 'llm-wiki: %s\n' "$*" >&2; }
+die() { say "$*"; exit 1; }
+
+[ $# -ge 1 ] || die "usage: run <wikileaf-mcp|wikileaf-mcp-editor|wikileaf> [arguments...]"
+binary="$1"
+shift
+case "$binary" in
+  wikileaf-mcp | wikileaf-mcp-editor | wikileaf) ;;
+  *) die "unknown binary '$binary' (wikileaf-mcp, wikileaf-mcp-editor or wikileaf)" ;;
+esac
+
+if [ -n "${WIKILEAF_BIN_DIR:-}" ]; then
+  [ -x "$WIKILEAF_BIN_DIR/$binary" ] || die "$WIKILEAF_BIN_DIR/$binary is not an executable"
+  exec "$WIKILEAF_BIN_DIR/$binary" "$@"
+fi
+
+here="$(cd "$(dirname "$0")" && pwd)"
+release="${LLM_WIKI_RELEASE_FILE:-$here/../release.env}"
+[ -f "$release" ] || die "no release.env next to the plugin ($release)"
+# release.env only holds NAME=value lines.
+# shellcheck disable=SC1090
+. "$release"
+
+case "$(uname -s)/$(uname -m)" in
+  Linux/x86_64) target=x86_64-unknown-linux-gnu ;;
+  Linux/aarch64 | Linux/arm64) target=aarch64-unknown-linux-gnu ;;
+  Darwin/x86_64) target=x86_64-apple-darwin ;;
+  Darwin/arm64) target=aarch64-apple-darwin ;;
+  *) die "no Wikileaf build for $(uname -s)/$(uname -m); build it from source and set WIKILEAF_BIN_DIR" ;;
+esac
+key="$(printf '%s' "$target" | tr '-' '_')"
+eval "expected=\${SHA256_$key:-}"
+[ -n "${VERSION:-}" ] || die "release.env has no VERSION"
+[ -n "$expected" ] || die "release.env has no SHA256_$key: no release is pinned for $target"
+[ -n "${BASE_URL:-}" ] || die "release.env has no BASE_URL: no release is published yet; set WIKILEAF_BIN_DIR to a build"
+
+cache="${LLM_WIKI_CACHE:-${CLAUDE_PLUGIN_DATA:-${XDG_DATA_HOME:-$HOME/.local/share}/llm-wiki}}"
+dir="$cache/bin/$VERSION-$target"
+if [ ! -x "$dir/$binary" ]; then
+  name="wikileaf-$VERSION-$target"
+  tmp="$(mktemp -d "${TMPDIR:-/tmp}/llm-wiki.XXXXXX")"
+  trap 'rm -rf "$tmp"' EXIT INT TERM
+  say "downloading $name (once)"
+  url="$BASE_URL/$name.tar.gz"
+  case "$url" in
+    file://*) cp "${url#file://}" "$tmp/archive.tar.gz" || die "cannot read $url" ;;
+    *)
+      if command -v curl >/dev/null 2>&1; then
+        curl -fsSL "$url" -o "$tmp/archive.tar.gz" || die "download failed: $url"
+      elif command -v wget >/dev/null 2>&1; then
+        wget -q "$url" -O "$tmp/archive.tar.gz" || die "download failed: $url"
+      else
+        die "need curl or wget to download $url"
+      fi
+      ;;
+  esac
+  if command -v sha256sum >/dev/null 2>&1; then
+    actual="$(sha256sum "$tmp/archive.tar.gz" | cut -d' ' -f1)"
+  else
+    actual="$(shasum -a 256 "$tmp/archive.tar.gz" | cut -d' ' -f1)"
+  fi
+  [ "$actual" = "$expected" ] || die "checksum mismatch for $name: expected $expected, got $actual; not running it"
+  mkdir -p "$tmp/unpacked"
+  tar -xzf "$tmp/archive.tar.gz" -C "$tmp/unpacked" || die "cannot unpack $name"
+  [ -x "$tmp/unpacked/$name/$binary" ] || die "$name has no $binary"
+  mkdir -p "$cache/bin"
+  rm -rf "$dir.partial"
+  mv "$tmp/unpacked/$name" "$dir.partial"
+  rm -rf "$dir"
+  mv "$dir.partial" "$dir"
+  trap - EXIT INT TERM
+  rm -rf "$tmp"
+fi
+exec "$dir/$binary" "$@"

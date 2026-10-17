@@ -1,0 +1,16 @@
+{
+  "description": "Optionally records what a finished session taught in the wiki (off unless WIKILEAF_SESSION_SYNC is set).",
+  "hooks": {
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/session-end.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

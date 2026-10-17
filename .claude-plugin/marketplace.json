@@ -1,0 +1,14 @@
+{
+  "name": "llm-wiki",
+  "owner": {
+    "name": "Amoz Pay"
+  },
+  "plugins": [
+    {
+      "name": "llm-wiki",
+      "source": "./hosts/claude-code",
+      "description": "Your own LLM wiki: build, query and maintain a curated Markdown wiki of cited knowledge with Wikileaf's validated tools (search, cite, and an editor that rejects batches that break the wiki's conventions).",
+      "version": "0.1.0"
+    }
+  ]
+}
