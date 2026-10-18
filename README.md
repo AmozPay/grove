@@ -36,13 +36,12 @@ tools. For a read-only server, change the `args` in `hosts/claude-code/.claude-p
 
 ## Hermes (and other Agent Plugins v1 hosts)
 
-`hosts/agent-plugin/` is an [Agent Plugins v1](https://agent-plugins.org) package: `plugin.json`, `skills/grove/`
+The repository root is also an [Agent Plugins v1](https://agent-plugins.org) package: `plugin.json`, `skills/grove/`
 and `mcp.json` (the `leaf` server, run by `./bin/run leaf-mcp-editor`). It is generated from the same
 `core/plugin.json` as the Claude Code plugin, so both have the same name, version, description and server.
 
 ```sh
-cp -r hosts/agent-plugin ~/.hermes/plugins/grove    # a package from a Git repository's root installs with `hermes plugins install` instead
-hermes plugins enable grove                         # packages install disabled; MCP servers connect next session
+hermes plugins install AmozPay/grove --enable    # packages install disabled without --enable; MCP servers connect next session
 ```
 
 - Hermes starts Leaf's server with a filtered environment (`LEAF_WIKI` is **not** passed), so the wiki is

@@ -93,8 +93,9 @@ INIT_BY_USER = (
 
 
 def build_agent_plugin(out: Path) -> None:
-    """Agent Plugins v1 (https://agent-plugins.org): plugin.json, skills/ and mcp.json. Hermes loads it."""
-    base = out / "agent-plugin"
+    """Agent Plugins v1 (https://agent-plugins.org): plugin.json, skills/ and mcp.json. Hermes installs a
+    repository's root, so this one is written at the root of the repository."""
+    base = out
     manifest = {
         "$schema": AGENT_PLUGIN_SCHEMA % "plugin",
         "name": CONFIG["name"],
@@ -144,43 +145,42 @@ def build_marketplace(root: Path) -> None:
     write(root / ".claude-plugin" / "marketplace.json", json.dumps(marketplace, indent=2) + "\n")
 
 
+# Everything build.py writes, relative to the repository root. Nothing else in the root is generated.
+GENERATED = ["hosts", "plugin.json", "mcp.json", "skills", "bin", "release.env", ".claude-plugin"]
+
+
 def build_all(root: Path) -> None:
-    hosts = root / "hosts"
-    if hosts.exists():
-        shutil.rmtree(hosts)
-    build_claude_code(hosts)
-    build_agent_plugin(hosts)
+    for name in GENERATED:
+        path = root / name
+        shutil.rmtree(path) if path.is_dir() else path.unlink(missing_ok=True)
+    build_claude_code(root / "hosts")
+    build_agent_plugin(root)
     build_marketplace(root)
 
 
-def tree(path: Path) -> dict:
-    return {
-        str(p.relative_to(path)): (p.read_bytes(), p.stat().st_mode & 0o111)
-        for p in sorted(path.rglob("*"))
-        if p.is_file()
-    }
+def tree(root: Path) -> dict:
+    files = {}
+    for name in GENERATED:
+        path = root / name
+        for p in [path] if path.is_file() else sorted(path.rglob("*")):
+            if p.is_file():
+                files[str(p.relative_to(root))] = (p.read_bytes(), p.stat().st_mode & 0o111)
+    return files
 
 
 def main() -> int:
     if "--check" in sys.argv:
         with tempfile.TemporaryDirectory() as tmp:
             build_all(Path(tmp))
-            have = tree(ROOT / "hosts")
-            fresh_hosts = tree(Path(tmp) / "hosts")
-            if fresh_hosts != have:
-                changed = sorted(set(fresh_hosts) ^ set(have)) or sorted(
-                    k for k in fresh_hosts if fresh_hosts[k] != have.get(k)
-                )
-                print("hosts/ is out of date; run scripts/build.py. Differs:", *changed, sep="\n  ")
+            fresh, have = tree(Path(tmp)), tree(ROOT)
+            if fresh != have:
+                changed = sorted(set(fresh) ^ set(have)) or sorted(k for k in fresh if fresh[k] != have.get(k))
+                print("generated files are out of date; run scripts/build.py. Differs:", *changed, sep="\n  ")
                 return 1
-            market = (Path(tmp) / ".claude-plugin" / "marketplace.json").read_text()
-            if market != (ROOT / ".claude-plugin" / "marketplace.json").read_text():
-                print(".claude-plugin/marketplace.json is out of date; run scripts/build.py")
-                return 1
-        print("hosts/ is up to date")
+        print("generated files are up to date")
         return 0
     build_all(ROOT)
-    print("generated hosts/ and .claude-plugin/marketplace.json")
+    print("generated " + ", ".join(GENERATED))
     return 0
 
 

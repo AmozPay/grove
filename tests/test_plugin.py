@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CC = ROOT / "hosts" / "claude-code"
-AP = ROOT / "hosts" / "agent-plugin"
+AP = ROOT  # the Agent Plugins v1 package is the repository root (Hermes installs a repo root)
 
 
 def frontmatter(path: Path) -> dict:
@@ -42,7 +42,7 @@ class ClaudeCode(unittest.TestCase):
             self.assertTrue(fm["description"], name)
 
     def test_no_placeholder_is_left(self):
-        for path in list((CC / "commands").glob("*.md")) + list((ROOT / "hosts" / "agent-plugin").rglob("*.md")):
+        for path in list((CC / "commands").glob("*.md")) + list((ROOT / "skills").rglob("*.md")):
             self.assertNotIn("{{", path.read_text(), str(path))
 
     def test_commands_use_the_plugin_launcher(self):
@@ -90,7 +90,7 @@ class Hook(unittest.TestCase):
         self.assertTrue(hook.stat().st_mode & stat.S_IXUSR)
         text = hook.read_text()
         self.assertIn("scripts/build.py", text)
-        self.assertIn("git add hosts .claude-plugin/marketplace.json", text)
+        self.assertIn("git add hosts plugin.json mcp.json skills bin release.env .claude-plugin", text)
 
 
 class Core(unittest.TestCase):
