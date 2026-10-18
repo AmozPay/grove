@@ -1,0 +1,33 @@
+# Tests for the plugin. The first job needs nothing but a shell and Python.
+# The second downloads the Leaf release pinned in core/release.env through the
+# plugin's own launcher (so the download URL and the sha256 pin are exercised)
+# and runs the tests that check the plugin against the real binaries.
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  structure:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generated files are up to date
+        run: python3 scripts/build.py --check
+      - name: Launcher
+        run: sh tests/test_launcher.sh
+      - name: Structure
+        run: python3 tests/test_plugin.py
+
+  against-the-release:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download the pinned release through the launcher
+        run: |
+          export GROVE_CACHE="$RUNNER_TEMP/grove-cache"
+          sh core/bin/run leaf --version
+          echo "LEAF_BIN_DIR=$(ls -d "$GROVE_CACHE"/bin/*)" >> "$GITHUB_ENV"
+      - name: Plugin against the real tools
+        run: python3 tests/test_against_leaf.py

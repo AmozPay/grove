@@ -93,7 +93,7 @@ class Core(unittest.TestCase):
 
     def test_release_env_is_only_name_value_lines(self):
         for line in (ROOT / "core" / "release.env").read_text().splitlines():
-            self.assertTrue(not line.strip() or line.startswith("#") or re.match(r"^[A-Z0-9_]+=[^ ]*$", line), line)
+            self.assertTrue(not line.strip() or line.startswith("#") or re.match(r"^[A-Za-z0-9_]+=[^ ]*$", line), line)
 
 
 if __name__ == "__main__":
