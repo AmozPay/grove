@@ -1,7 +1,7 @@
 # grove
 
 Your own LLM wiki, as a plugin: a skill that teaches a model to **ingest sources, answer with citations and
-keep the wiki healthy**, on top of [Leaf](../wikileaf)'s tools, which read a curated Markdown wiki and
+keep the wiki healthy**, on top of [Leaf](https://github.com/AmozPay/leaf)'s tools, which read a curated Markdown wiki and
 change it only through validated, all-or-nothing batches. A change that breaks the wiki's conventions is
 rejected with a message that says what to fix, so even a small model cannot erode the wiki.
 
