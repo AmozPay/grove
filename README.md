@@ -62,6 +62,12 @@ hermes plugins enable grove                         # packages install disabled;
 `core/` is the source of truth (skill, commands, launcher, release pin). `hosts/` and
 `.claude-plugin/marketplace.json` are generated and committed:
 
+Enable the pre-commit hook once per clone; it runs the build and stages `hosts/` and the marketplace:
+
+```sh
+git config core.hooksPath .githooks
+```
+
 ```sh
 scripts/build.py            # regenerate
 tests/run.sh                # launcher, generated files, structure

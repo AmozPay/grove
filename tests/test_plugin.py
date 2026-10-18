@@ -84,6 +84,15 @@ class AgentPlugin(unittest.TestCase):
         self.assertIn("./bin/run leaf editor init", skill.read_text())
 
 
+class Hook(unittest.TestCase):
+    def test_pre_commit_hook_builds_and_stages(self):
+        hook = ROOT / ".githooks" / "pre-commit"
+        self.assertTrue(hook.stat().st_mode & stat.S_IXUSR)
+        text = hook.read_text()
+        self.assertIn("scripts/build.py", text)
+        self.assertIn("git add hosts .claude-plugin/marketplace.json", text)
+
+
 class Core(unittest.TestCase):
     def texts(self):
         paths = [ROOT / "core" / "skill" / "SKILL.md"] + sorted((ROOT / "core" / "commands").glob("*.md"))
