@@ -1,5 +1,6 @@
 {
   "name": "grove",
+  "description": "grove: build, query and maintain an LLM wiki through the Leaf MCP tools.",
   "owner": {
     "name": "Amoz Pay"
   },

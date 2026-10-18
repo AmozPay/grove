@@ -139,6 +139,7 @@ def build_hermes(out: Path) -> None:
 def build_marketplace(root: Path) -> None:
     marketplace = {
         "name": "grove",
+        "description": "grove: build, query and maintain an LLM wiki through the Leaf MCP tools.",
         "owner": AUTHOR,
         "plugins": [
             {
