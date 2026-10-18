@@ -46,6 +46,13 @@ out="$("$RUN" leaf-mcp one two 2>"$TMP/err")"
 [ "$out" = "leaf-mcp one two" ] && ok "second run uses the cache (the release is gone)" || fail "cache: got '$out'"
 ! grep -q "downloading" "$TMP/err" && ok "no download the second time" || fail "downloaded again"
 
+# Hosts that set PLUGIN_DATA (Agent Plugins v1) get their cache there, when GROVE_CACHE is not set.
+rm -rf "$TMP/cache"
+tar -czf "$TMP/release/$name.tar.gz" -C "$TMP/build" "$name"
+pin "$sum"
+out="$(env -u GROVE_CACHE PLUGIN_DATA="$TMP/plugin-data" "$RUN" leaf one 2>/dev/null)"
+[ "$out" = "leaf one" ] && [ -x "$TMP/plugin-data/bin/9.9.9-$target/leaf" ] && ok "caches in PLUGIN_DATA" || fail "PLUGIN_DATA cache: got '$out'"
+
 # A wrong hash is refused and nothing is cached or run.
 rm -rf "$TMP/cache"
 tar -czf "$TMP/release/$name.tar.gz" -C "$TMP/build" "$name"

@@ -14,7 +14,8 @@
 # Environment:
 #   LEAF_BIN_DIR       use the binaries in this folder (development; no download)
 #   GROVE_CACHE         where downloaded binaries are kept
-#                          (default: $CLAUDE_PLUGIN_DATA, else ~/.local/share/grove)
+#                          (default: $CLAUDE_PLUGIN_DATA or $PLUGIN_DATA, whichever the host
+#                          sets, else ~/.local/share/grove)
 set -eu
 
 say() { printf 'grove: %s\n' "$*" >&2; }
@@ -53,7 +54,7 @@ eval "expected=\${SHA256_$key:-}"
 [ -n "$expected" ] || die "release.env has no SHA256_$key: no release is pinned for $target"
 [ -n "${BASE_URL:-}" ] || die "release.env has no BASE_URL: no release is published yet; set LEAF_BIN_DIR to a build"
 
-cache="${GROVE_CACHE:-${CLAUDE_PLUGIN_DATA:-${XDG_DATA_HOME:-$HOME/.local/share}/grove}}"
+cache="${GROVE_CACHE:-${CLAUDE_PLUGIN_DATA:-${PLUGIN_DATA:-${XDG_DATA_HOME:-$HOME/.local/share}/grove}}}"
 dir="$cache/bin/$VERSION-$target"
 if [ ! -x "$dir/$binary" ]; then
   name="leaf-$VERSION-$target"

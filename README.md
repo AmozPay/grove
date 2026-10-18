@@ -34,10 +34,28 @@ The wiki is `LEAF_WIKI` (default `~/wiki`); the cache is `LEAF_DB`. Create a wik
 tools. For a read-only server, change the `args` in `hosts/claude-code/.claude-plugin/plugin.json` to
 `["leaf-mcp"]`. With it, `/grove:ingest` and `/grove:init` cannot change anything.
 
-## Hermes
+## Hermes (and other Agent Plugins v1 hosts)
 
-`hosts/hermes/` has the skill (with the workflows written out, as Hermes has no slash commands) and a
-`mcp_servers` snippet. **Not tested against a running Hermes**; see its README.
+`hosts/agent-plugin/` is an [Agent Plugins v1](https://agent-plugins.org) package: `plugin.json`, `skills/grove/`
+and `mcp.json` (the `leaf` server, run by `./bin/run leaf-mcp-editor`). It is generated from the same
+`core/plugin.json` as the Claude Code plugin, so both have the same name, version, description and server.
+
+```sh
+cp -r hosts/agent-plugin ~/.hermes/plugins/grove    # a package from a Git repository's root installs with `hermes plugins install` instead
+hermes plugins enable grove                         # packages install disabled; MCP servers connect next session
+```
+
+- Hermes starts Leaf's server with a filtered environment (`LEAF_WIKI` is **not** passed), so the wiki is
+  Leaf's default, `~/wiki`. To use another folder, declare your own `leaf` entry under `mcp_servers:` in
+  `config.yaml` (a config entry replaces the package's) with `env: {LEAF_WIKI: ...}` and the absolute path of
+  `bin/run`. The agent is still never told the folder.
+- The downloaded binaries are cached in the plugin's `PLUGIN_DATA` directory.
+- Hermes has no slash commands for packages: the workflows are written into the skill. Creating a wiki is a
+  command, not a tool, so the init workflow asks the user to run `./bin/run leaf editor init` themselves.
+- Hermes's tools are named `mcp__leaf__guide`, `mcp__leaf__search`, ...
+- Checked for real with Hermes's own loader and MCP client, in a temporary `HERMES_HOME` and `HOME` (so the
+  default wiki was a temporary one): the package loads without diagnostics, the 12 tools register, and
+  `guide` answers. No model session was run with it.
 
 ## Developing
 
@@ -68,5 +86,5 @@ Not verified, or known limits:
 - Pinned to Leaf v0.1.0 (Linux and macOS, x86_64 and aarch64): the launcher downloads the archive for your
   platform from the GitHub release once and refuses it unless its sha256 matches `core/release.env`. CI checks this
   download on every push. The macOS archives were built by CI but never run by me.
-- Hermes: not tested. Linux and macOS only (the launcher is POSIX shell).
+- Linux and macOS only (the launcher is POSIX shell).
 - No license is set: that is for the owner to choose.

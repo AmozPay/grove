@@ -10,6 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CC = ROOT / "hosts" / "claude-code"
+AP = ROOT / "hosts" / "agent-plugin"
 
 
 def frontmatter(path: Path) -> dict:
@@ -41,7 +42,7 @@ class ClaudeCode(unittest.TestCase):
             self.assertTrue(fm["description"], name)
 
     def test_no_placeholder_is_left(self):
-        for path in list((CC / "commands").glob("*.md")) + list((ROOT / "hosts" / "hermes").rglob("*.md")):
+        for path in list((CC / "commands").glob("*.md")) + list((ROOT / "hosts" / "agent-plugin").rglob("*.md")):
             self.assertNotIn("{{", path.read_text(), str(path))
 
     def test_commands_use_the_plugin_launcher(self):
@@ -52,18 +53,35 @@ class ClaudeCode(unittest.TestCase):
     def test_scripts_are_executable(self):
         for rel in ["bin/run"]:
             self.assertTrue((CC / rel).stat().st_mode & stat.S_IXUSR, rel)
-        self.assertTrue((ROOT / "hosts" / "hermes" / "bin" / "run").stat().st_mode & stat.S_IXUSR)
+        self.assertTrue((AP / "bin" / "run").stat().st_mode & stat.S_IXUSR)
 
 
-class Hermes(unittest.TestCase):
-    def test_skill_and_config(self):
-        skill = ROOT / "hosts" / "hermes" / "skills" / "research" / "grove" / "SKILL.md"
-        fm = frontmatter(skill)
-        self.assertEqual(fm["name"], "grove")
+class AgentPlugin(unittest.TestCase):
+    """Agent Plugins v1 (Hermes): plugin.json, skills/ and mcp.json, from the same core/plugin.json as Claude Code."""
+
+    def test_manifest_and_server(self):
+        manifest = json.loads((AP / "plugin.json").read_text())
+        self.assertEqual(manifest["$schema"], "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json")
+        mcp = json.loads((AP / "mcp.json").read_text())
+        server = mcp["mcpServers"]["leaf"]
+        # A v1 command is a bare executable or ./path inside the plugin; the editor build is named on purpose.
+        self.assertEqual((server["command"], server["args"]), ("./bin/run", ["leaf-mcp-editor"]))
+        self.assertTrue((AP / server["command"]).is_file())
+
+    def test_same_identity_as_claude_code(self):
+        cc = json.loads((CC / ".claude-plugin" / "plugin.json").read_text())
+        ap = json.loads((AP / "plugin.json").read_text())
+        for key in ["name", "version", "description", "author", "keywords"]:
+            self.assertEqual(cc[key], ap[key], key)
+        cc_server = cc["mcpServers"]["leaf"]
+        self.assertEqual(cc_server["args"], json.loads((AP / "mcp.json").read_text())["mcpServers"]["leaf"]["args"])
+
+    def test_skill_is_valid_and_carries_the_workflows(self):
+        skill = AP / "skills" / "grove" / "SKILL.md"
+        self.assertEqual(frontmatter(skill)["name"], "grove")  # Agent Skills: the name is the directory's
         self.assertIn("## Workflows", skill.read_text())
-        snippet = (ROOT / "hosts" / "hermes" / "config.yaml.snippet").read_text()
-        self.assertIn("mcp_servers:", snippet)
-        self.assertIn("leaf-mcp-editor", snippet)
+        self.assertNotIn("LEAF_WIKI", skill.read_text())
+        self.assertIn("./bin/run leaf editor init", skill.read_text())
 
 
 class Core(unittest.TestCase):
