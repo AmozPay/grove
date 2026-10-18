@@ -23,7 +23,7 @@ The plugin runs Leaf's prebuilt binaries: a launcher (`bin/run`) downloads the r
 ## Install (Claude Code)
 
 ```
-/plugin marketplace add /path/to/grove
+/plugin marketplace add AmozPay/grove
 /plugin install grove@grove
 ```
 
@@ -55,7 +55,7 @@ The tests that use the real binaries check that every tool the skill names exist
 
 ## Status and limits
 
-Checked for real (Claude Code 2.1.300, a temporary wiki, never `~/wiki`):
+Checked for real (Claude Code 2.1.300, a temporary wiki, never a real one):
 
 - The plugin loads (`--plugin-dir`), the launcher starts the editor server, and the tools are named
   `mcp__plugin_grove_leaf__*`, as expected.
@@ -65,9 +65,8 @@ Checked for real (Claude Code 2.1.300, a temporary wiki, never `~/wiki`):
 
 Not verified, or known limits:
 
-- **No release is published.** `core/release.env` has no `BASE_URL` and no hashes, so the launcher stops with a
-  message. Until one exists, point `LEAF_BIN_DIR` at a folder with `leaf`, `leaf-mcp` and
-  `leaf-mcp-editor` (`scripts/package-release.sh` in Leaf builds them).
-- Leaf's release workflow has not been run (there is no remote); only the host target was packaged.
+- Pinned to Leaf v0.1.0 (Linux and macOS, x86_64 and aarch64): the launcher downloads the archive for your
+  platform from the GitHub release once and refuses it unless its sha256 matches `core/release.env`. CI checks this
+  download on every push. The macOS archives were built by CI but never run by me.
 - Hermes: not tested. Linux and macOS only (the launcher is POSIX shell).
 - No license is set: that is for the owner to choose.
