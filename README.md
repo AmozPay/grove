@@ -15,8 +15,7 @@ upstream skill with Wikileaf's editor.
 |---|---|
 | **MCP server** (`wikileaf`) | Wikileaf's tools, which document themselves (server instructions, tool descriptions, the batch format): read and search, and the editor |
 | **Skill** `llm-wiki` | the workflow (resume, answer, ingest, lint) and the rule that the wiki is only ever touched through the tools |
-| **Commands** | `/llm-wiki:init`, `/llm-wiki:ingest`, `/llm-wiki:query`, `/llm-wiki:lint` (and `/llm-wiki:sync-session`, used by the hook) |
-| **Session-end hook** | optional, **off by default**: records what a finished session taught |
+| **Commands** | `/llm-wiki:init`, `/llm-wiki:ingest`, `/llm-wiki:query`, `/llm-wiki:lint` |
 
 The plugin runs Wikileaf's prebuilt binaries: a launcher (`bin/run`) downloads the release pinned in
 `release.env` once, checks its sha256 against the pinned value, caches it, and runs it.
@@ -35,26 +34,6 @@ The wiki is `WIKILEAF_WIKI` (default `~/wiki`); the cache is `WIKILEAF_DB`. Crea
 tools. For a read-only server, change the `args` in `hosts/claude-code/.claude-plugin/plugin.json` to
 `["wikileaf-mcp"]`. With it, `/llm-wiki:ingest` and `/llm-wiki:init` cannot change anything.
 
-## The session-end hook
-
-When enabled, a session that ends starts a background `claude -p` run that reads the transcript and, through
-the editor, records the durable facts in the wiki (as an immutable `raw/transcripts/` note, cited by the pages
-it updates). It **costs tokens and writes files**, so nothing happens unless you set:
-
-```sh
-export WIKILEAF_SESSION_SYNC=wiki   # only sessions that used a wiki tool
-export WIKILEAF_SESSION_SYNC=all    # every session, in every project
-```
-
-The run uses **the same model and agent as the session it records**: the model is the last real one in the session's transcript, the agent is the `agent` setting of the session's settings (local, then project, then user). A session started with `--agent` on the command line leaves no trace the hook can read, so its agent is not known and the run uses the default one. `LLM_WIKI_SYNC_MODEL` / `LLM_WIKI_SYNC_AGENT` override both (for example to sync with a cheaper model).
-
-Safeguards: a session is synced once; transcripts under 4,000 bytes are skipped
-(`WIKILEAF_SESSION_SYNC_MIN_BYTES`); one run is capped at $0.50 (`LLM_WIKI_SYNC_BUDGET_USD`; a small session cost about $0.18 when measured, a long transcript costs more and a run that hits the cap stops without finishing); the run may only use
-`Read` and the wiki's tools; the run's own end does not trigger the hook again (`LLM_WIKI_SYNC_CHILD`); its
-state and logs are in the plugin's data folder (`LLM_WIKI_DATA`), never in the wiki, so another sync tool can
-share the wiki. The run is told to leave out anything that looks like a secret, but a transcript is sent to the
-model like any other conversation: do not enable this for sessions you would not put in the wiki.
-
 ## Hermes
 
 `hosts/hermes/` has the skill (with the workflows written out, as Hermes has no slash commands) and a
@@ -62,12 +41,12 @@ model like any other conversation: do not enable this for sessions you would not
 
 ## Developing
 
-`core/` is the source of truth (skill, commands, launcher, hook, release pin). `hosts/` and
+`core/` is the source of truth (skill, commands, launcher, release pin). `hosts/` and
 `.claude-plugin/marketplace.json` are generated and committed:
 
 ```sh
 scripts/build.py            # regenerate
-tests/run.sh                # launcher, hook, generated files, structure
+tests/run.sh                # launcher, generated files, structure
 WIKILEAF_BIN_DIR=/folder/with/the/binaries tests/run.sh   # also checks the skill against the real tools
 scripts/pin-release.sh <BASE_URL> <folder with wikileaf-<version>-<target>.tar.gz>   # pin a release
 ```
@@ -79,12 +58,9 @@ The tests that use the real binaries check that every tool the skill names exist
 Checked for real (Claude Code 2.1.300, a temporary wiki, never `~/wiki`):
 
 - The plugin loads (`--plugin-dir`), the launcher starts the editor server, and the tools are named
-  `mcp__plugin_llm-wiki_wikileaf__*`, as the hook's allow-list expects.
-- `/llm-wiki:sync-session` on a synthetic transcript created three interlinked pages and a cited raw note in one
-  batch, left out a password, and the wiki stayed conformant.
+  `mcp__plugin_llm-wiki_wikileaf__*`, as expected.
 - `/llm-wiki:query` with `Read`, `Grep`, `Glob` and `Bash` all allowed (and the wiki in the working directory)
   used only `guide`, `search` and `cite`.
-- The SessionEnd hook fires, receives the session id and transcript, and finds the plugin's data folder.
 - The launcher downloads, hash-checks and runs the real packaged archive (a local `file://` release).
 
 Not verified, or known limits:
@@ -93,9 +69,5 @@ Not verified, or known limits:
   message. Until one exists, point `WIKILEAF_BIN_DIR` at a folder with `wikileaf`, `wikileaf-mcp` and
   `wikileaf-mcp-editor` (`scripts/package-release.sh` in Wikileaf builds them).
 - Wikileaf's release workflow has not been run (there is no remote); only the host target was packaged.
-- The hook's background run finds `/llm-wiki:sync-session` only when the plugin is **installed**; under
-  `--plugin-dir` it does not (seen in the run's log), so it records nothing.
-- The hook was not run to completion through a real session end followed by a full sync (its two halves were
-  checked separately).
 - Hermes: not tested. Linux and macOS only (the launcher is POSIX shell).
 - No license is set: that is for the owner to choose.

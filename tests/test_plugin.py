@@ -36,7 +36,7 @@ class ClaudeCode(unittest.TestCase):
 
     def test_skill_and_commands_have_frontmatter(self):
         self.assertEqual(frontmatter(CC / "skills" / "llm-wiki" / "SKILL.md")["name"], "llm-wiki")
-        for name in ["init", "ingest", "query", "lint", "sync-session"]:
+        for name in ["init", "ingest", "query", "lint"]:
             fm = frontmatter(CC / "commands" / f"{name}.md")
             self.assertTrue(fm["description"], name)
 
@@ -49,14 +49,8 @@ class ClaudeCode(unittest.TestCase):
         self.assertIn("${CLAUDE_PLUGIN_ROOT}/bin/run wikileaf editor init", text)
         self.assertIn("$ARGUMENTS", text)
 
-    def test_hook(self):
-        hooks = json.loads((CC / "hooks" / "hooks.json").read_text())["hooks"]
-        command = hooks["SessionEnd"][0]["hooks"][0]["command"]
-        self.assertIn("${CLAUDE_PLUGIN_ROOT}/hooks/session-end.sh", command)
-        self.assertLessEqual(hooks["SessionEnd"][0]["hooks"][0]["timeout"], 10)
-
     def test_scripts_are_executable(self):
-        for rel in ["bin/run", "hooks/session-end.sh"]:
+        for rel in ["bin/run"]:
             self.assertTrue((CC / rel).stat().st_mode & stat.S_IXUSR, rel)
         self.assertTrue((ROOT / "hosts" / "hermes" / "bin" / "run").stat().st_mode & stat.S_IXUSR)
 
@@ -96,13 +90,6 @@ class Core(unittest.TestCase):
         for op in ["add_passage", "create_page", "replace_passage", "declare_value"]:
             self.assertNotIn(op, skill)
         self.assertNotIn("```", skill)
-
-    def test_every_tool_named_is_allowed_to_the_session_hook(self):
-        hook = (ROOT / "core" / "hooks" / "session-end.sh").read_text()
-        for name, text in self.texts().items():
-            for tool in set(re.findall(r"`((?:editor_)?[a-z]+)`", text)):
-                if tool in {"guide", "search", "cite", "metadata", "people", "stats"} or tool.startswith("editor_"):
-                    self.assertIn(tool, hook, f"{name} names {tool}, which the session-end hook does not allow")
 
     def test_release_env_is_only_name_value_lines(self):
         for line in (ROOT / "core" / "release.env").read_text().splitlines():

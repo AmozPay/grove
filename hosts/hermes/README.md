@@ -7,5 +7,3 @@ documentation (`mcp_servers` with `command`, `args`, `env`, `timeout`), but noth
 1. Copy `skills/research/llm-wiki/` to `~/.hermes/skills/research/llm-wiki/`.
 2. Add `config.yaml.snippet` to `~/.hermes/config.yaml`, with this folder's path and your wiki's.
 3. Restart Hermes. The first start downloads the pinned Wikileaf release (see `release.env`).
-
-There is no session-end hook for Hermes here; Hermes has its own session-sync mechanism.

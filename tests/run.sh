@@ -4,7 +4,6 @@
 cd "$(dirname "$0")/.." || exit 1
 status=0
 sh tests/test_launcher.sh || status=1
-sh tests/test_hook.sh || status=1
 python3 scripts/build.py --check || status=1
 python3 tests/test_plugin.py || status=1
 python3 tests/test_against_wikileaf.py || status=1

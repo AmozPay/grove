@@ -6,6 +6,5 @@
   `WIKILEAF_BIN_DIR` check this against real binaries; run them when either side changes.
 - Never point a test or an experiment at `~/wiki` (the owner's wiki): use a temporary one
   (`WIKILEAF_WIKI=/tmp/...`). Tests use stub programs or temporary wikis only.
-- The session-end hook is off by default and must stay so. Keep its recursion guard and its exact tool list.
 - No network calls except the launcher's one-time, hash-checked download. Do not push or publish without the
   owner's go-ahead.
