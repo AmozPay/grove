@@ -1,5 +1,5 @@
 #!/bin/sh
-# Run every test. LEAF_BIN_DIR (a folder with the Wikileaf binaries) enables
+# Run every test. LEAF_BIN_DIR (a folder with the Leaf binaries) enables
 # the tests that check the plugin against the real tools.
 cd "$(dirname "$0")/.." || exit 1
 status=0

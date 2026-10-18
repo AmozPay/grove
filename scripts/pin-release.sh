@@ -1,5 +1,5 @@
 #!/bin/sh
-# Pin a Wikileaf release into core/release.env:
+# Pin a Leaf release into core/release.env:
 #
 #   scripts/pin-release.sh <BASE_URL> <DIR-WITH-ARCHIVES>
 #
@@ -31,7 +31,7 @@ for archive in "$dir"/leaf-*.tar.gz; do
 SHA256_$key=$sum"
 done
 {
-  echo "# The Wikileaf release this plugin runs. Pinned: the launcher refuses an"
+  echo "# The Leaf release this plugin runs. Pinned: the launcher refuses an"
   echo "# archive whose sha256 differs. Regenerate with scripts/pin-release.sh."
   echo "VERSION=$version"
   echo "BASE_URL=$base"

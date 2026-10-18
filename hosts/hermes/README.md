@@ -6,4 +6,4 @@ documentation (`mcp_servers` with `command`, `args`, `env`, `timeout`), but noth
 
 1. Copy `skills/research/grove/` to `~/.hermes/skills/research/grove/`.
 2. Add `config.yaml.snippet` to `~/.hermes/config.yaml`, with this folder's path and your wiki's.
-3. Restart Hermes. The first start downloads the pinned Wikileaf release (see `release.env`).
+3. Restart Hermes. The first start downloads the pinned Leaf release (see `release.env`).

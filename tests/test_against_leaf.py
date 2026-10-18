@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The plugin against the real Wikileaf binaries, so the skill cannot drift
+"""The plugin against the real Leaf binaries, so the skill cannot drift
 from what the tools do. Needs LEAF_BIN_DIR: a folder with leaf,
 leaf-mcp and leaf-mcp-editor (an unpacked release, or target/debug
 after building them). Skipped without it."""
@@ -55,7 +55,7 @@ def skill_text() -> str:
 
 
 @unittest.skipUnless(BIN and (Path(BIN) / "leaf-mcp-editor").exists(), "LEAF_BIN_DIR not set")
-class AgainstWikileaf(unittest.TestCase):
+class AgainstLeaf(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         os.environ["LEAF_BIN_DIR"] = BIN

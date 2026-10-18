@@ -20,7 +20,7 @@ CORE = ROOT / "core"
 VERSION = (ROOT / "VERSION").read_text().strip()
 DESCRIPTION = (
     "Your own LLM wiki: build, query and maintain a curated Markdown wiki of cited knowledge "
-    "with Wikileaf's validated tools (search, cite, and an editor that rejects batches that "
+    "with Leaf's validated tools (search, cite, and an editor that rejects batches that "
     "break the wiki's conventions)."
 )
 AUTHOR = {"name": "Amoz Pay"}
@@ -131,7 +131,7 @@ def build_hermes(out: Path) -> None:
         "documentation (`mcp_servers` with `command`, `args`, `env`, `timeout`), but nothing here has been run in it.\n\n"
         "1. Copy `skills/research/grove/` to `~/.hermes/skills/research/grove/`.\n"
         "2. Add `config.yaml.snippet` to `~/.hermes/config.yaml`, with this folder's path and your wiki's.\n"
-        "3. Restart Hermes. The first start downloads the pinned Wikileaf release (see `release.env`).\n"
+        "3. Restart Hermes. The first start downloads the pinned Leaf release (see `release.env`).\n"
 
     )
 

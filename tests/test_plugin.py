@@ -72,7 +72,7 @@ class Core(unittest.TestCase):
         return {str(p.relative_to(ROOT)): p.read_text() for p in paths}
 
     def test_the_agent_is_never_told_where_the_wiki_is(self):
-        # Only Wikileaf knows the folder: the skill and commands must not name it.
+        # Only Leaf knows the folder: the skill and commands must not name it.
         for name, text in self.texts().items():
             for word in ["LEAF_WIKI", "LEAF_DB", "~/wiki", "/home/", "$HOME", "--wiki"]:
                 self.assertNotIn(word, text, f"{name} mentions {word}")
