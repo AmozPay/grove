@@ -1,6 +1,6 @@
 ---
-name: llm-wiki
-description: Build, query and maintain a curated Markdown wiki of cited knowledge (Karpathy's LLM-wiki pattern) through the wikileaf tools. Use when the user asks to create a wiki or knowledge base, ingest or add a source, ask a question the wiki may answer, or lint or audit the wiki.
+name: grove
+description: Build, query and maintain a curated Markdown wiki of cited knowledge (Karpathy's LLM-wiki pattern) through the leaf tools. Use when the user asks to create a wiki or knowledge base, ingest or add a source, ask a question the wiki may answer, or lint or audit the wiki.
 version: 0.1.0
 author: Amoz Pay
 platforms: [linux, macos]
@@ -17,9 +17,9 @@ A wiki is a set of Markdown pages that you compile from immutable raw sources, s
 down once, linked and cited instead of being rediscovered on every question. The user curates the sources and
 asks the questions. You summarize, link, cite and keep the wiki consistent.
 
-## The rule: use the wikileaf tools, only
+## The rule: use the leaf tools, only
 
-**Everything you read from or write to the wiki goes through the `wikileaf` MCP tools**, which document
+**Everything you read from or write to the wiki goes through the `leaf` MCP tools**, which document
 themselves. Do not read the wiki's files, search them with shell tools, or edit them: not with Read, Grep,
 Glob, Bash, Write or Edit. Do not look for where the wiki is: you are not told, and you do not need it. The
 tools enforce the wiki's conventions, so a change that breaks one is rejected with a message that says what to
@@ -68,7 +68,7 @@ page contested and name the pages it disagrees with, and say so to the user.
 
 ## Starting a wiki
 
-`/llm-wiki:init` creates one. A new wiki is conformant but empty, and every page needs two links to other
+`/grove:init` creates one. A new wiki is conformant but empty, and every page needs two links to other
 pages, so a single first page is rejected: the first batch creates at least three pages that link to each
 other, together with the first source.
 
@@ -96,12 +96,12 @@ Hermes has no slash commands for this skill: follow the matching workflow when t
 
 ### init: Create a new, empty LLM wiki
 
-Create a new wiki with the `llm-wiki` skill's conventions.
+Create a new wiki with the `grove` skill's conventions.
 
 1. Ask the user, if they have not said: what the wiki covers (one line), and a few starting tags.
 2. Run (a shell command; it knows where the wiki goes, and refuses a wiki that already has files):
 
-   `<llm-wiki>/bin/run wikileaf editor init --domain "<domain>" --tag <tag1>,<tag2>`
+   `<grove>/bin/run leaf editor init --domain "<domain>" --tag <tag1>,<tag2>`
 
    The domain: the user's request.
 3. Call `guide` and show the user the domain and rules in two or three lines.
@@ -110,7 +110,7 @@ Create a new wiki with the `llm-wiki` skill's conventions.
 
 ### ingest: Add a source to the wiki: save it, then create and update cited pages
 
-Ingest this source into the wiki, following the `llm-wiki` skill ("Ingesting a source"): the user's request
+Ingest this source into the wiki, following the `grove` skill ("Ingesting a source"): the user's request
 
 1. Resume first (`guide`, `editor_conformance`).
 2. Read the source in full. If it is a file path, read the file; if it is a URL, fetch it; otherwise it is the
@@ -124,7 +124,7 @@ Ingest this source into the wiki, following the `llm-wiki` skill ("Ingesting a s
 
 ### query: Answer a question from the wiki, with citations
 
-Answer this question from the wiki, following the `llm-wiki` skill ("Answering a question"): the user's request
+Answer this question from the wiki, following the `grove` skill ("Answering a question"): the user's request
 
 Use `search` (twice with different words if the first finds little), `cite` the sources of the claims that
 matter, and answer with the page and source of each claim. Say what the wiki does not cover. Do not use
@@ -133,7 +133,7 @@ it as a `query` page.
 
 ### lint: Check the wiki for problems and fix them with the user's agreement
 
-Lint the wiki, following the `llm-wiki` skill ("Linting"): the user's request
+Lint the wiki, following the `grove` skill ("Linting"): the user's request
 
 Call `guide` and `editor_conformance`, then look for what the tools cannot see: pages nobody links to, contradictory
 claims, claims a newer source replaced, tags used once, subjects that deserve a page. Report the findings

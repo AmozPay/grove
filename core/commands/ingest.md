@@ -3,7 +3,7 @@ description: Add a source to the wiki: save it, then create and update cited pag
 argument-hint: "<file path, URL or pasted text>"
 ---
 
-Ingest this source into the wiki, following the `llm-wiki` skill ("Ingesting a source"): {{ARGS}}
+Ingest this source into the wiki, following the `grove` skill ("Ingesting a source"): {{ARGS}}
 
 1. Resume first (`guide`, `editor_conformance`).
 2. Read the source in full. If it is a file path, read the file; if it is a URL, fetch it; otherwise it is the

@@ -2,7 +2,7 @@
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 FAILED=0
-TMP="$(mktemp -d "${TMPDIR:-/tmp}/llm-wiki-test.XXXXXX")"
+TMP="$(mktemp -d "${TMPDIR:-/tmp}/grove-test.XXXXXX")"
 trap 'rm -rf "$TMP"' EXIT
 
 ok() { printf 'ok   %s\n' "$1"; }

@@ -1,4 +1,4 @@
-# llm-wiki
+# grove
 
 Your own LLM wiki, as a plugin: a skill that teaches a model to **ingest sources, answer with citations and
 keep the wiki healthy**, on top of [Wikileaf](../wikileaf)'s tools, which read a curated Markdown wiki and
@@ -13,9 +13,9 @@ upstream skill with Wikileaf's editor.
 
 | | |
 |---|---|
-| **MCP server** (`wikileaf`) | Wikileaf's tools, which document themselves (server instructions, tool descriptions, the batch format): read and search, and the editor |
-| **Skill** `llm-wiki` | the workflow (resume, answer, ingest, lint) and the rule that the wiki is only ever touched through the tools |
-| **Commands** | `/llm-wiki:init`, `/llm-wiki:ingest`, `/llm-wiki:query`, `/llm-wiki:lint` |
+| **MCP server** (`leaf`) | Wikileaf's tools, which document themselves (server instructions, tool descriptions, the batch format): read and search, and the editor |
+| **Skill** `grove` | the workflow (resume, answer, ingest, lint) and the rule that the wiki is only ever touched through the tools |
+| **Commands** | `/grove:init`, `/grove:ingest`, `/grove:query`, `/grove:lint` |
 
 The plugin runs Wikileaf's prebuilt binaries: a launcher (`bin/run`) downloads the release pinned in
 `release.env` once, checks its sha256 against the pinned value, caches it, and runs it.
@@ -23,16 +23,16 @@ The plugin runs Wikileaf's prebuilt binaries: a launcher (`bin/run`) downloads t
 ## Install (Claude Code)
 
 ```
-/plugin marketplace add /path/to/llm-wiki
-/plugin install llm-wiki@llm-wiki
+/plugin marketplace add /path/to/grove
+/plugin install grove@grove
 ```
 
-The wiki is `WIKILEAF_WIKI` (default `~/wiki`); the cache is `WIKILEAF_DB`. Create a wiki with
-`/llm-wiki:init`, then `/llm-wiki:ingest <file or URL>`, then ask questions with `/llm-wiki:query`.
+The wiki is `LEAF_WIKI` (default `~/wiki`); the cache is `LEAF_DB`. Create a wiki with
+`/grove:init`, then `/grove:ingest <file or URL>`, then ask questions with `/grove:query`.
 
-**Write access is explicit.** The plugin starts `wikileaf-mcp-editor`, the build that has the `editor_*`
+**Write access is explicit.** The plugin starts `leaf-mcp-editor`, the build that has the `editor_*`
 tools. For a read-only server, change the `args` in `hosts/claude-code/.claude-plugin/plugin.json` to
-`["wikileaf-mcp"]`. With it, `/llm-wiki:ingest` and `/llm-wiki:init` cannot change anything.
+`["leaf-mcp"]`. With it, `/grove:ingest` and `/grove:init` cannot change anything.
 
 ## Hermes
 
@@ -47,8 +47,8 @@ tools. For a read-only server, change the `args` in `hosts/claude-code/.claude-p
 ```sh
 scripts/build.py            # regenerate
 tests/run.sh                # launcher, generated files, structure
-WIKILEAF_BIN_DIR=/folder/with/the/binaries tests/run.sh   # also checks the skill against the real tools
-scripts/pin-release.sh <BASE_URL> <folder with wikileaf-<version>-<target>.tar.gz>   # pin a release
+LEAF_BIN_DIR=/folder/with/the/binaries tests/run.sh   # also checks the skill against the real tools
+scripts/pin-release.sh <BASE_URL> <folder with leaf-<version>-<target>.tar.gz>   # pin a release
 ```
 
 The tests that use the real binaries check that every tool the skill names exists, that the server documents its own use (instructions, descriptions, the batch format), and that the guide works without revealing where the wiki is. The skill itself must not name the wiki's folder (a test checks), and holds the workflow only: Wikileaf's tools carry their own documentation.
@@ -58,16 +58,16 @@ The tests that use the real binaries check that every tool the skill names exist
 Checked for real (Claude Code 2.1.300, a temporary wiki, never `~/wiki`):
 
 - The plugin loads (`--plugin-dir`), the launcher starts the editor server, and the tools are named
-  `mcp__plugin_llm-wiki_wikileaf__*`, as expected.
-- `/llm-wiki:query` with `Read`, `Grep`, `Glob` and `Bash` all allowed (and the wiki in the working directory)
+  `mcp__plugin_grove_leaf__*`, as expected.
+- `/grove:query` with `Read`, `Grep`, `Glob` and `Bash` all allowed (and the wiki in the working directory)
   used only `guide`, `search` and `cite`.
 - The launcher downloads, hash-checks and runs the real packaged archive (a local `file://` release).
 
 Not verified, or known limits:
 
 - **No release is published.** `core/release.env` has no `BASE_URL` and no hashes, so the launcher stops with a
-  message. Until one exists, point `WIKILEAF_BIN_DIR` at a folder with `wikileaf`, `wikileaf-mcp` and
-  `wikileaf-mcp-editor` (`scripts/package-release.sh` in Wikileaf builds them).
+  message. Until one exists, point `LEAF_BIN_DIR` at a folder with `leaf`, `leaf-mcp` and
+  `leaf-mcp-editor` (`scripts/package-release.sh` in Wikileaf builds them).
 - Wikileaf's release workflow has not been run (there is no remote); only the host target was packaged.
 - Hermes: not tested. Linux and macOS only (the launcher is POSIX shell).
 - No license is set: that is for the owner to choose.

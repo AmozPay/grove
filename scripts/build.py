@@ -59,21 +59,21 @@ def with_header(text: str) -> str:
 def build_claude_code(out: Path) -> None:
     base = out / "claude-code"
     manifest = {
-        "name": "llm-wiki",
+        "name": "grove",
         "version": VERSION,
         "description": DESCRIPTION,
         "author": AUTHOR,
-        "keywords": ["wiki", "knowledge-base", "llm-wiki", "markdown", "citations", "mcp"],
+        "keywords": ["wiki", "knowledge-base", "grove", "markdown", "citations", "mcp"],
         "mcpServers": {
-            "wikileaf": {
+            "leaf": {
                 "type": "stdio",
                 "command": "${CLAUDE_PLUGIN_ROOT}/bin/run",
-                "args": ["wikileaf-mcp-editor"],
+                "args": ["leaf-mcp-editor"],
             }
         },
     }
     write(base / ".claude-plugin" / "plugin.json", json.dumps(manifest, indent=2) + "\n")
-    write(base / "skills" / "llm-wiki" / "SKILL.md", with_header((CORE / "skill" / "SKILL.md").read_text()))
+    write(base / "skills" / "grove" / "SKILL.md", with_header((CORE / "skill" / "SKILL.md").read_text()))
     for name in COMMANDS:
         text = (CORE / "commands" / f"{name}.md").read_text()
         text = render_command(text, "${CLAUDE_PLUGIN_ROOT}/bin/run", "$ARGUMENTS")
@@ -91,11 +91,11 @@ def build_hermes(out: Path) -> None:
         text = (CORE / "commands" / f"{name}.md").read_text()
         cfront, cbody = split_frontmatter(text)
         title = re.search(r"^description: (.*)$", cfront, re.M).group(1)
-        cbody = render_command(cbody, "<llm-wiki>/bin/run", "the user's request")
+        cbody = render_command(cbody, "<grove>/bin/run", "the user's request")
         commands.append(f"### {name}: {title}\n{cbody.rstrip()}\n")
     skill = (
         "---\n"
-        "name: llm-wiki\n"
+        "name: grove\n"
         f"description: {description}\n"
         f"version: {VERSION}\n"
         f"author: {AUTHOR['name']}\n"
@@ -109,16 +109,16 @@ def build_hermes(out: Path) -> None:
         "Hermes has no slash commands for this skill: follow the matching workflow when the user asks for it.\n\n"
         + "\n".join(commands)
     )
-    write(base / "skills" / "research" / "llm-wiki" / "SKILL.md", skill)
+    write(base / "skills" / "research" / "grove" / "SKILL.md", skill)
     config = (
         "# Add to ~/.hermes/config.yaml, then restart Hermes (or /reload-mcp).\n"
-        "# Replace <llm-wiki> with the folder of this wrapper (hosts/hermes).\n"
+        "# Replace <grove> with the folder of this wrapper (hosts/hermes).\n"
         "mcp_servers:\n"
-        "  wikileaf:\n"
-        '    command: "<llm-wiki>/bin/run"\n'
-        '    args: ["wikileaf-mcp-editor"]   # or "wikileaf-mcp" for a read-only server\n'
+        "  leaf:\n"
+        '    command: "<grove>/bin/run"\n'
+        '    args: ["leaf-mcp-editor"]   # or "leaf-mcp" for a read-only server\n'
         "    env:\n"
-        '      WIKILEAF_WIKI: "/home/you/wiki"\n'
+        '      LEAF_WIKI: "/home/you/wiki"\n'
         "    timeout: 60\n"
     )
     write(base / "config.yaml.snippet", config)
@@ -126,10 +126,10 @@ def build_hermes(out: Path) -> None:
     copy(CORE / "release.env", base / "release.env")
     write(
         base / "README.md",
-        f"{HEADER}# llm-wiki for Hermes\n\n"
+        f"{HEADER}# grove for Hermes\n\n"
         "NOT TESTED against a running Hermes: the MCP configuration format is the one in Hermes's own\n"
         "documentation (`mcp_servers` with `command`, `args`, `env`, `timeout`), but nothing here has been run in it.\n\n"
-        "1. Copy `skills/research/llm-wiki/` to `~/.hermes/skills/research/llm-wiki/`.\n"
+        "1. Copy `skills/research/grove/` to `~/.hermes/skills/research/grove/`.\n"
         "2. Add `config.yaml.snippet` to `~/.hermes/config.yaml`, with this folder's path and your wiki's.\n"
         "3. Restart Hermes. The first start downloads the pinned Wikileaf release (see `release.env`).\n"
 
@@ -138,11 +138,11 @@ def build_hermes(out: Path) -> None:
 
 def build_marketplace(root: Path) -> None:
     marketplace = {
-        "name": "llm-wiki",
+        "name": "grove",
         "owner": AUTHOR,
         "plugins": [
             {
-                "name": "llm-wiki",
+                "name": "grove",
                 "source": "./hosts/claude-code",
                 "description": DESCRIPTION,
                 "version": VERSION,

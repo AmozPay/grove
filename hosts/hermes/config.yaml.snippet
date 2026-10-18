@@ -1,9 +1,9 @@
 # Add to ~/.hermes/config.yaml, then restart Hermes (or /reload-mcp).
-# Replace <llm-wiki> with the folder of this wrapper (hosts/hermes).
+# Replace <grove> with the folder of this wrapper (hosts/hermes).
 mcp_servers:
-  wikileaf:
-    command: "<llm-wiki>/bin/run"
-    args: ["wikileaf-mcp-editor"]   # or "wikileaf-mcp" for a read-only server
+  leaf:
+    command: "<grove>/bin/run"
+    args: ["leaf-mcp-editor"]   # or "leaf-mcp" for a read-only server
     env:
-      WIKILEAF_WIKI: "/home/you/wiki"
+      LEAF_WIKI: "/home/you/wiki"
     timeout: 60

@@ -21,13 +21,13 @@ def frontmatter(path: Path) -> dict:
 class ClaudeCode(unittest.TestCase):
     def test_manifest(self):
         manifest = json.loads((CC / ".claude-plugin" / "plugin.json").read_text())
-        self.assertEqual(manifest["name"], "llm-wiki")
+        self.assertEqual(manifest["name"], "grove")
         self.assertEqual(manifest["version"], (ROOT / "VERSION").read_text().strip())
-        server = manifest["mcpServers"]["wikileaf"]
+        server = manifest["mcpServers"]["leaf"]
         self.assertEqual(server["type"], "stdio")
         self.assertEqual(server["command"], "${CLAUDE_PLUGIN_ROOT}/bin/run")
         # The editor build is named on purpose: write access is never implicit.
-        self.assertEqual(server["args"], ["wikileaf-mcp-editor"])
+        self.assertEqual(server["args"], ["leaf-mcp-editor"])
 
     def test_marketplace_points_at_the_plugin(self):
         market = json.loads((ROOT / ".claude-plugin" / "marketplace.json").read_text())
@@ -35,7 +35,7 @@ class ClaudeCode(unittest.TestCase):
         self.assertTrue((ROOT / source / ".claude-plugin" / "plugin.json").is_file())
 
     def test_skill_and_commands_have_frontmatter(self):
-        self.assertEqual(frontmatter(CC / "skills" / "llm-wiki" / "SKILL.md")["name"], "llm-wiki")
+        self.assertEqual(frontmatter(CC / "skills" / "grove" / "SKILL.md")["name"], "grove")
         for name in ["init", "ingest", "query", "lint"]:
             fm = frontmatter(CC / "commands" / f"{name}.md")
             self.assertTrue(fm["description"], name)
@@ -46,7 +46,7 @@ class ClaudeCode(unittest.TestCase):
 
     def test_commands_use_the_plugin_launcher(self):
         text = (CC / "commands" / "init.md").read_text()
-        self.assertIn("${CLAUDE_PLUGIN_ROOT}/bin/run wikileaf editor init", text)
+        self.assertIn("${CLAUDE_PLUGIN_ROOT}/bin/run leaf editor init", text)
         self.assertIn("$ARGUMENTS", text)
 
     def test_scripts_are_executable(self):
@@ -57,13 +57,13 @@ class ClaudeCode(unittest.TestCase):
 
 class Hermes(unittest.TestCase):
     def test_skill_and_config(self):
-        skill = ROOT / "hosts" / "hermes" / "skills" / "research" / "llm-wiki" / "SKILL.md"
+        skill = ROOT / "hosts" / "hermes" / "skills" / "research" / "grove" / "SKILL.md"
         fm = frontmatter(skill)
-        self.assertEqual(fm["name"], "llm-wiki")
+        self.assertEqual(fm["name"], "grove")
         self.assertIn("## Workflows", skill.read_text())
         snippet = (ROOT / "hosts" / "hermes" / "config.yaml.snippet").read_text()
         self.assertIn("mcp_servers:", snippet)
-        self.assertIn("wikileaf-mcp-editor", snippet)
+        self.assertIn("leaf-mcp-editor", snippet)
 
 
 class Core(unittest.TestCase):
@@ -74,12 +74,12 @@ class Core(unittest.TestCase):
     def test_the_agent_is_never_told_where_the_wiki_is(self):
         # Only Wikileaf knows the folder: the skill and commands must not name it.
         for name, text in self.texts().items():
-            for word in ["WIKILEAF_WIKI", "WIKILEAF_DB", "~/wiki", "/home/", "$HOME", "--wiki"]:
+            for word in ["LEAF_WIKI", "LEAF_DB", "~/wiki", "/home/", "$HOME", "--wiki"]:
                 self.assertNotIn(word, text, f"{name} mentions {word}")
 
     def test_the_skill_enforces_the_tools(self):
         skill = self.texts()["core/skill/SKILL.md"]
-        self.assertIn("use the wikileaf tools, only", skill)
+        self.assertIn("use the leaf tools, only", skill)
         for tool in ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]:
             self.assertIn(tool, skill.split("## Every session")[0], f"the rule does not name {tool}")
         self.assertIn("Never fall back to files", skill)

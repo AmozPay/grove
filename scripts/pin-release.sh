@@ -3,7 +3,7 @@
 #
 #   scripts/pin-release.sh <BASE_URL> <DIR-WITH-ARCHIVES>
 #
-# BASE_URL is where wikileaf-<version>-<target>.tar.gz files are published
+# BASE_URL is where leaf-<version>-<target>.tar.gz files are published
 # (https://... or file:///...). Every archive in the folder is hashed, so the
 # plugin runs only what was pinned here.
 set -eu
@@ -13,10 +13,10 @@ dir="$2"
 out="$(cd "$(dirname "$0")/.." && pwd)/core/release.env"
 version=""
 lines=""
-for archive in "$dir"/wikileaf-*.tar.gz; do
-  [ -f "$archive" ] || { echo "no wikileaf-*.tar.gz in $dir" >&2; exit 1; }
-  name="$(basename "$archive" .tar.gz)"        # wikileaf-<version>-<target>
-  rest="${name#wikileaf-}"
+for archive in "$dir"/leaf-*.tar.gz; do
+  [ -f "$archive" ] || { echo "no leaf-*.tar.gz in $dir" >&2; exit 1; }
+  name="$(basename "$archive" .tar.gz)"        # leaf-<version>-<target>
+  rest="${name#leaf-}"
   v="${rest%%-*}"
   target="${rest#*-}"
   [ -z "$version" ] || [ "$version" = "$v" ] || { echo "archives of different versions in $dir" >&2; exit 1; }

@@ -1,6 +1,6 @@
 ---
-name: llm-wiki
-description: Build, query and maintain a curated Markdown wiki of cited knowledge (Karpathy's LLM-wiki pattern) through the wikileaf tools. Use when the user asks to create a wiki or knowledge base, ingest or add a source, ask a question the wiki may answer, or lint or audit the wiki.
+name: grove
+description: Build, query and maintain a curated Markdown wiki of cited knowledge (Karpathy's LLM-wiki pattern) through the leaf tools. Use when the user asks to create a wiki or knowledge base, ingest or add a source, ask a question the wiki may answer, or lint or audit the wiki.
 ---
 
 # LLM wiki
@@ -9,9 +9,9 @@ A wiki is a set of Markdown pages that you compile from immutable raw sources, s
 down once, linked and cited instead of being rediscovered on every question. The user curates the sources and
 asks the questions. You summarize, link, cite and keep the wiki consistent.
 
-## The rule: use the wikileaf tools, only
+## The rule: use the leaf tools, only
 
-**Everything you read from or write to the wiki goes through the `wikileaf` MCP tools**, which document
+**Everything you read from or write to the wiki goes through the `leaf` MCP tools**, which document
 themselves. Do not read the wiki's files, search them with shell tools, or edit them: not with Read, Grep,
 Glob, Bash, Write or Edit. Do not look for where the wiki is: you are not told, and you do not need it. The
 tools enforce the wiki's conventions, so a change that breaks one is rejected with a message that says what to
@@ -60,7 +60,7 @@ page contested and name the pages it disagrees with, and say so to the user.
 
 ## Starting a wiki
 
-`/llm-wiki:init` creates one. A new wiki is conformant but empty, and every page needs two links to other
+`/grove:init` creates one. A new wiki is conformant but empty, and every page needs two links to other
 pages, so a single first page is rejected: the first batch creates at least three pages that link to each
 other, together with the first source.
 

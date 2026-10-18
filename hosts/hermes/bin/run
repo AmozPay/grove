@@ -1,7 +1,7 @@
 #!/bin/sh
 # Run one of Wikileaf's binaries, downloading it first if it is not here yet.
 #
-#   run <wikileaf-mcp | wikileaf-mcp-editor | wikileaf> [arguments...]
+#   run <leaf-mcp | leaf-mcp-editor | leaf> [arguments...]
 #
 # The release this plugin is built against, its download location and the
 # sha256 of each archive are pinned in release.env next to this script's
@@ -12,29 +12,29 @@
 # this script goes to stderr.
 #
 # Environment:
-#   WIKILEAF_BIN_DIR       use the binaries in this folder (development; no download)
-#   LLM_WIKI_CACHE         where downloaded binaries are kept
-#                          (default: $CLAUDE_PLUGIN_DATA, else ~/.local/share/llm-wiki)
+#   LEAF_BIN_DIR       use the binaries in this folder (development; no download)
+#   GROVE_CACHE         where downloaded binaries are kept
+#                          (default: $CLAUDE_PLUGIN_DATA, else ~/.local/share/grove)
 set -eu
 
-say() { printf 'llm-wiki: %s\n' "$*" >&2; }
+say() { printf 'grove: %s\n' "$*" >&2; }
 die() { say "$*"; exit 1; }
 
-[ $# -ge 1 ] || die "usage: run <wikileaf-mcp|wikileaf-mcp-editor|wikileaf> [arguments...]"
+[ $# -ge 1 ] || die "usage: run <leaf-mcp|leaf-mcp-editor|leaf> [arguments...]"
 binary="$1"
 shift
 case "$binary" in
-  wikileaf-mcp | wikileaf-mcp-editor | wikileaf) ;;
-  *) die "unknown binary '$binary' (wikileaf-mcp, wikileaf-mcp-editor or wikileaf)" ;;
+  leaf-mcp | leaf-mcp-editor | leaf) ;;
+  *) die "unknown binary '$binary' (leaf-mcp, leaf-mcp-editor or leaf)" ;;
 esac
 
-if [ -n "${WIKILEAF_BIN_DIR:-}" ]; then
-  [ -x "$WIKILEAF_BIN_DIR/$binary" ] || die "$WIKILEAF_BIN_DIR/$binary is not an executable"
-  exec "$WIKILEAF_BIN_DIR/$binary" "$@"
+if [ -n "${LEAF_BIN_DIR:-}" ]; then
+  [ -x "$LEAF_BIN_DIR/$binary" ] || die "$LEAF_BIN_DIR/$binary is not an executable"
+  exec "$LEAF_BIN_DIR/$binary" "$@"
 fi
 
 here="$(cd "$(dirname "$0")" && pwd)"
-release="${LLM_WIKI_RELEASE_FILE:-$here/../release.env}"
+release="${GROVE_RELEASE_FILE:-$here/../release.env}"
 [ -f "$release" ] || die "no release.env next to the plugin ($release)"
 # release.env only holds NAME=value lines.
 # shellcheck disable=SC1090
@@ -45,19 +45,19 @@ case "$(uname -s)/$(uname -m)" in
   Linux/aarch64 | Linux/arm64) target=aarch64-unknown-linux-gnu ;;
   Darwin/x86_64) target=x86_64-apple-darwin ;;
   Darwin/arm64) target=aarch64-apple-darwin ;;
-  *) die "no Wikileaf build for $(uname -s)/$(uname -m); build it from source and set WIKILEAF_BIN_DIR" ;;
+  *) die "no Wikileaf build for $(uname -s)/$(uname -m); build it from source and set LEAF_BIN_DIR" ;;
 esac
 key="$(printf '%s' "$target" | tr '-' '_')"
 eval "expected=\${SHA256_$key:-}"
 [ -n "${VERSION:-}" ] || die "release.env has no VERSION"
 [ -n "$expected" ] || die "release.env has no SHA256_$key: no release is pinned for $target"
-[ -n "${BASE_URL:-}" ] || die "release.env has no BASE_URL: no release is published yet; set WIKILEAF_BIN_DIR to a build"
+[ -n "${BASE_URL:-}" ] || die "release.env has no BASE_URL: no release is published yet; set LEAF_BIN_DIR to a build"
 
-cache="${LLM_WIKI_CACHE:-${CLAUDE_PLUGIN_DATA:-${XDG_DATA_HOME:-$HOME/.local/share}/llm-wiki}}"
+cache="${GROVE_CACHE:-${CLAUDE_PLUGIN_DATA:-${XDG_DATA_HOME:-$HOME/.local/share}/grove}}"
 dir="$cache/bin/$VERSION-$target"
 if [ ! -x "$dir/$binary" ]; then
-  name="wikileaf-$VERSION-$target"
-  tmp="$(mktemp -d "${TMPDIR:-/tmp}/llm-wiki.XXXXXX")"
+  name="leaf-$VERSION-$target"
+  tmp="$(mktemp -d "${TMPDIR:-/tmp}/grove.XXXXXX")"
   trap 'rm -rf "$tmp"' EXIT INT TERM
   say "downloading $name (once)"
   url="$BASE_URL/$name.tar.gz"
