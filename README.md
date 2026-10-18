@@ -46,8 +46,10 @@ export WIKILEAF_SESSION_SYNC=wiki   # only sessions that used a wiki tool
 export WIKILEAF_SESSION_SYNC=all    # every session, in every project
 ```
 
+The run uses **the same model and agent as the session it records**: the model is the last real one in the session's transcript, the agent is the `agent` setting of the session's settings (local, then project, then user). A session started with `--agent` on the command line leaves no trace the hook can read, so its agent is not known and the run uses the default one. `LLM_WIKI_SYNC_MODEL` / `LLM_WIKI_SYNC_AGENT` override both (for example to sync with a cheaper model).
+
 Safeguards: a session is synced once; transcripts under 4,000 bytes are skipped
-(`WIKILEAF_SESSION_SYNC_MIN_BYTES`); one run is capped at $0.50 (`LLM_WIKI_SYNC_BUDGET_USD`); the run may only use
+(`WIKILEAF_SESSION_SYNC_MIN_BYTES`); one run is capped at $0.50 (`LLM_WIKI_SYNC_BUDGET_USD`; a small session cost about $0.18 when measured, a long transcript costs more and a run that hits the cap stops without finishing); the run may only use
 `Read` and the wiki's tools; the run's own end does not trigger the hook again (`LLM_WIKI_SYNC_CHILD`); its
 state and logs are in the plugin's data folder (`LLM_WIKI_DATA`), never in the wiki, so another sync tool can
 share the wiki. The run is told to leave out anything that looks like a secret, but a transcript is sent to the

@@ -15,7 +15,15 @@
 #                                    (default mcp__plugin_llm-wiki_wikileaf__)
 #   LLM_WIKI_DATA                    state and logs (default $CLAUDE_PLUGIN_DATA,
 #                                    else ~/.local/share/llm-wiki)
+#   LLM_WIKI_SYNC_MODEL, LLM_WIKI_SYNC_AGENT
+#                                    force the model or agent of the run (by default
+#                                    it uses those of the session it records)
 #   WIKILEAF_WIKI                    the wiki (default ~/wiki), as for the server
+#
+# The run uses the same model as the session (the last one its transcript
+# records) and the same agent (the `agent` setting of the session's settings:
+# local, then project, then user). A session started with --agent on the
+# command line leaves no trace the hook can read, so its agent is not known.
 #
 # State lives in the plugin's own folder, never in the wiki (a wiki may be
 # synced by another tool too). The child run sets LLM_WIKI_SYNC_CHILD, which
@@ -47,6 +55,30 @@ min="${WIKILEAF_SESSION_SYNC_MIN_BYTES:-4000}"
 size="$(wc -c < "$transcript" | tr -d ' ')"
 [ "$size" -ge "$min" ] || exit 0
 
+# The model of the session: the last real one in its transcript.
+safe() { case "$1" in "" | *[!A-Za-z0-9._:@\[\]-]*) return 1 ;; esac; }
+model="${LLM_WIKI_SYNC_MODEL:-}"
+if [ -z "$model" ]; then
+  model="$(grep -o '"model":"[^"]*"' "$transcript" 2>/dev/null | grep -v '"model":"<' | tail -1 | sed 's/^"model":"//; s/"$//')"
+fi
+safe "$model" || model=""
+
+# The agent of the session: from the settings it ran with.
+agent="${LLM_WIKI_SYNC_AGENT:-}"
+if [ -z "$agent" ]; then
+  cwd="$(field cwd)"
+  for settings in "$cwd/.claude/settings.local.json" "$cwd/.claude/settings.json" "$HOME/.claude/settings.json"; do
+    [ -f "$settings" ] || continue
+    if command -v jq >/dev/null 2>&1; then
+      agent="$(jq -r '.agent // empty' "$settings" 2>/dev/null)"
+    else
+      agent="$(sed -n 's/.*"agent"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$settings" | head -1)"
+    fi
+    [ -z "$agent" ] || break
+  done
+fi
+safe "$agent" || agent=""
+
 prefix="${LLM_WIKI_TOOL_PREFIX:-mcp__plugin_llm-wiki_wikileaf__}"
 if [ "${WIKILEAF_SESSION_SYNC}" = "wiki" ]; then
   grep -q "wikileaf__" "$transcript" || exit 0
@@ -63,18 +95,23 @@ for tool in guide search cite metadata people stats editor_page editor_metadata 
   tools="$tools $prefix$tool"
 done
 prompt="/llm-wiki:sync-session $transcript"
+# Same model and agent as the session. Words, because they are only ever safe
+# names (checked above), so unquoted expansion adds nothing else.
+same=""
+[ -z "$model" ] || same="$same --model $model"
+[ -z "$agent" ] || same="$same --agent $agent"
 
 # Detached, so the end of this session is not held up (or killed) by it.
 (
   export LLM_WIKI_SYNC_CHILD=1
   # shellcheck disable=SC2086
   if command -v setsid >/dev/null 2>&1; then
-    setsid nohup claude -p "$prompt" --allowedTools $tools \
+    setsid nohup claude -p "$prompt" $same --allowedTools $tools \
       --add-dir "$(dirname "$transcript")" \
       --max-budget-usd "${LLM_WIKI_SYNC_BUDGET_USD:-0.50}" \
       > "$data/$session.log" 2>&1 < /dev/null &
   else
-    nohup claude -p "$prompt" --allowedTools $tools \
+    nohup claude -p "$prompt" $same --allowedTools $tools \
       --add-dir "$(dirname "$transcript")" \
       --max-budget-usd "${LLM_WIKI_SYNC_BUDGET_USD:-0.50}" \
       > "$data/$session.log" 2>&1 < /dev/null &

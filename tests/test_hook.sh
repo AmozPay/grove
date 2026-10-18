@@ -64,8 +64,52 @@ run s4 "$TMP/projects/a.jsonl"; sleep 0.3
 run s5 "$TMP/projects/wiki.jsonl"
 [ "$(wait_calls 3)" = 3 ] && ok "mode wiki syncs a session that used one" || fail "mode wiki did not run"
 
+# The run uses the model and agent of the session it records.
+assistant() { printf '{"type":"assistant","message":{"model":"%s","content":"x"}}\n' "$1"; }
+modelled="$TMP/projects/modelled.jsonl"
+{ assistant claude-opus-5-5; echo '{"type":"user","message":"mentions \"model\":\"claude-fake-1\" in text"}'; assistant claude-sonnet-5-5; assistant "<synthetic>"; echo "tool_use mcp__plugin_llm-wiki_wikileaf__search"; } > "$modelled"
+cat "$TMP/projects/a.jsonl" >> "$modelled"
+mkdir -p "$TMP/proj/.claude" "$TMP/home/.claude"
+last_args() { grep '^ARGS' "$STUB_LOG" | tail -1; }
+n=$(calls)
+HOME="$TMP/home" run m1 "$modelled" 2>/dev/null; wait_calls $((n + 1)) >/dev/null
+case "$(last_args)" in *"--model claude-sonnet-5-5 "*) ok "runs on the session's last model (not a synthetic one, not one quoted in text)" ;; *) fail "model: $(last_args)" ;; esac
+case "$(last_args)" in *"--agent"*) fail "no agent was configured: $(last_args)" ;; *) ok "passes no agent when the session has none" ;; esac
+
+n=$(calls)
+LLM_WIKI_SYNC_MODEL=claude-haiku-5-5 HOME="$TMP/home" run m2 "$modelled"; wait_calls $((n + 1)) >/dev/null
+case "$(last_args)" in *"--model claude-haiku-5-5 "*) ok "a model can be forced" ;; *) fail "forced model: $(last_args)" ;; esac
+
+n=$(calls)
+big "$TMP/projects/nomodel.jsonl" "tool_use mcp__plugin_llm-wiki_wikileaf__stats"
+HOME="$TMP/home" run m3 "$TMP/projects/nomodel.jsonl"; wait_calls $((n + 1)) >/dev/null
+case "$(last_args)" in *"--model"*) fail "no model in the transcript: $(last_args)" ;; *) ok "no model flag when the transcript has none" ;; esac
+
+# The agent comes from the settings the session used: local, then project, then user.
+printf '{"agent":"user-agent"}' > "$TMP/home/.claude/settings.json"
+n=$(calls)
+printf '{"hook_event_name":"SessionEnd","session_id":"a1","transcript_path":"%s","cwd":"%s"}' "$modelled" "$TMP/proj" | HOME="$TMP/home" "$HOOK"; wait_calls $((n + 1)) >/dev/null
+case "$(last_args)" in *"--agent user-agent "*) ok "agent from the user settings" ;; *) fail "user agent: $(last_args)" ;; esac
+printf '{"agent": "project-agent", "other": 1}' > "$TMP/proj/.claude/settings.json"
+n=$(calls)
+printf '{"hook_event_name":"SessionEnd","session_id":"a2","transcript_path":"%s","cwd":"%s"}' "$modelled" "$TMP/proj" | HOME="$TMP/home" "$HOOK"; wait_calls $((n + 1)) >/dev/null
+case "$(last_args)" in *"--agent project-agent "*) ok "project settings beat user settings" ;; *) fail "project agent: $(last_args)" ;; esac
+printf '{"agent":"local-agent"}' > "$TMP/proj/.claude/settings.local.json"
+n=$(calls)
+printf '{"hook_event_name":"SessionEnd","session_id":"a3","transcript_path":"%s","cwd":"%s"}' "$modelled" "$TMP/proj" | HOME="$TMP/home" "$HOOK"; wait_calls $((n + 1)) >/dev/null
+case "$(last_args)" in *"--agent local-agent "*) ok "local settings beat project settings" ;; *) fail "local agent: $(last_args)" ;; esac
+printf '{"agent":"bad agent; rm -rf"}' > "$TMP/proj/.claude/settings.local.json"
+n=$(calls)
+printf '{"hook_event_name":"SessionEnd","session_id":"a4","transcript_path":"%s","cwd":"%s"}' "$modelled" "$TMP/proj" | HOME="$TMP/home" "$HOOK"; wait_calls $((n + 1)) >/dev/null
+case "$(last_args)" in *"rm -rf"*) fail "an unsafe agent name was passed: $(last_args)" ;; *) ok "an unsafe agent name is ignored" ;; esac
+rm -f "$TMP/proj/.claude/settings.local.json" "$TMP/proj/.claude/settings.json" "$TMP/home/.claude/settings.json"
+n=$(calls)
+LLM_WIKI_SYNC_AGENT=forced-agent HOME="$TMP/home" run m5 "$modelled"; wait_calls $((n + 1)) >/dev/null
+case "$(last_args)" in *"--agent forced-agent "*) ok "an agent can be forced" ;; *) fail "forced agent: $(last_args)" ;; esac
+base=$(calls)
+
 run '../evil' "$TMP/projects/a.jsonl"; sleep 0.3
-[ "$(calls)" = 3 ] && [ ! -e "$TMP/evil" ] && ok "an unsafe session id is ignored" || fail "unsafe session id"
+[ "$(calls)" = "$base" ] && [ ! -e "$TMP/evil" ] && ok "an unsafe session id is ignored" || fail "unsafe session id"
 printf 'not json' | "$HOOK"; echo "{}" | "$HOOK"
 ok "bad input exits quietly"
 
