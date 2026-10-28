@@ -1,13 +1,35 @@
 ---
 name: grove
-description: Build, query and maintain a curated Markdown wiki of cited knowledge (Karpathy's LLM-wiki pattern) through the leaf tools. Use first, for every question the user asks, before answering from memory or searching elsewhere: a question need not mention the user, their work or their notes for the wiki to hold the answer, so always check it. Also use it when the user asks to create a wiki, ingest or add a source, or lint or audit the wiki.
+description: "Search your wiki first for every question via Leaf."
 ---
 
 # LLM wiki
 
-A wiki is a set of Markdown pages that you compile from immutable raw sources, so that knowledge is written
-down once, linked and cited instead of being rediscovered on every question. The user curates the sources and
-asks the questions. You summarize, link, cite and keep the wiki consistent.
+Use the user's cited wiki as the first knowledge source, even for a short, ambiguous question such as
+"Who is Coco?" Do not wait for the user to say "Grove", "Leaf", "MCP", or "my wiki". This skill also covers
+adding sources and maintaining the wiki.
+
+## First move for a question
+
+1. Call the real Leaf MCP tool `mcp__leaf__guide` once per session. If the tools are deferred, discover
+   `mcp__leaf__guide`, `mcp__leaf__search`, and `mcp__leaf__cite` with the tool-discovery facility, load their
+   schemas, then call them. Their server is named **leaf**, not grove. Do not substitute `web_search` or
+   `session_search` for a wiki lookup.
+2. Call `mcp__leaf__search` with the user's exact name or keywords first (e.g. `Coco`, not "famous Coco").
+   Search aliases or other words if the first result is thin. A personal name, project, or acronym might be
+   known locally even if it looks like a public topic. For current public facts, use the wiki for personal
+   context first, then use a current source to verify the public facts.
+3. Answer only what the returned evidence supports. For a simple, low-stakes answer, a concise response
+   needs no displayed citation and no separate `cite` call. Use `mcp__leaf__cite` to inspect the underlying
+   source when the user asks for sources, a claim is consequential or uncertain, or the wiki passage and its
+   citation are insufficient to judge it. Cite the page/source in the answer when attribution matters;
+   distinguish a user's dated report from independent verification. If the wiki has no answer, say so, then
+   use another source or ask for clarification as appropriate.
+
+A tool call is an actual invocation with a result, **not** JSON or prose saying you used Grove. Never claim
+"no wiki match" unless `search` actually returned no relevant match after a second query. If the tools are
+not exposed or a call fails, say that plainly; do not simulate a tool result. A skill can guide tool choice
+but cannot force a model to call a tool: verify tool use from the recorded call, not the answer's wording.
 
 ## The rule: use the leaf tools, only
 
@@ -26,18 +48,18 @@ in it.
 
 ## Every session: resume
 
-Before answering or changing anything, call `guide`: the wiki's own rules, its latest changes and its index.
-Call `editor_conformance` too if you are going to edit. This prevents duplicate pages and contradictions. If
-there is no wiki yet, see "Starting a wiki".
+`guide` gives the wiki's own rules, latest changes and index. Call `editor_conformance` before an edit;
+this helps prevent duplicate pages and contradictions. If there is no wiki yet, see "Starting a wiki".
 
 ## Answering a question
 
-1. `search` with the question's key words, and filters when it names a person, place or tag. If it finds
-   little, search again with different words before concluding the wiki does not know.
-2. When a claim matters, `cite` its citation and read the source itself.
-3. Answer from what you found, naming the page and the source of each claim. Say plainly what the wiki does
-   not cover. A hit without a citation is the wiki's own prose: never present it as verified.
-4. If the answer is worth keeping, offer to file it as a `query` page.
+1. Search the question's key words, with filters when it names a person, place or tag. If it finds little,
+   search again with different words before concluding the wiki does not know.
+2. Give a direct, concise answer from the matching passage. Do not require a citation in every reply.
+   Inspect the underlying source with `cite` and attribute it when the user asks, the claim is consequential
+   or uncertain, or the passage does not establish the claim on its own. A hit without a citation is the
+   wiki's own prose: never present it as independently verified.
+3. Say plainly what the wiki does not cover. If the answer is worth keeping, offer to file it as a `query` page.
 
 ## Ingesting a source
 

@@ -79,9 +79,32 @@ class AgentPlugin(unittest.TestCase):
     def test_skill_is_valid_and_carries_the_workflows(self):
         skill = AP / "skills" / "grove" / "SKILL.md"
         self.assertEqual(frontmatter(skill)["name"], "grove")  # Agent Skills: the name is the directory's
+        # Plain YAML scalars cannot contain ': ' (Hermes rejects the skill at startup).
+        for path in [ROOT / "core" / "skill" / "SKILL.md", skill, CC / "skills" / "grove" / "SKILL.md"]:
+            description = frontmatter(path)["description"]
+            self.assertFalse(": " in description and not description.startswith(('"', "'", "|", ">")), path)
+            self.assertLessEqual(len(description.strip('"')), 60, path)
+            self.assertIn("wiki first", description, path)
         self.assertIn("## Workflows", skill.read_text())
         self.assertNotIn("LEAF_WIKI", skill.read_text())
         self.assertIn("./bin/run leaf editor init", skill.read_text())
+
+    def test_skill_routes_ambiguous_questions_to_real_leaf_calls(self):
+        for path in [ROOT / "core" / "skill" / "SKILL.md", AP / "skills" / "grove" / "SKILL.md",
+                     CC / "skills" / "grove" / "SKILL.md"]:
+            text = path.read_text()
+            for phrase in ["Who is Coco?", "mcp__leaf__guide", "mcp__leaf__search", "mcp__leaf__cite",
+                           "Do not substitute `web_search`", "not** JSON or prose", "cannot force a model"]:
+                self.assertIn(phrase, text, f"{path}: {phrase}")
+
+
+    def test_simple_answers_do_not_require_citations(self):
+        for path in [ROOT / "core" / "skill" / "SKILL.md", AP / "skills" / "grove" / "SKILL.md",
+                     CC / "skills" / "grove" / "SKILL.md", ROOT / "core" / "commands" / "query.md",
+                     CC / "commands" / "query.md"]:
+            text = path.read_text()
+            self.assertIn("no displayed citation", text, path)
+            self.assertIn("consequential or uncertain", text, path)
 
 
 class Hook(unittest.TestCase):
